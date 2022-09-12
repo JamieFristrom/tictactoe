@@ -60,9 +60,11 @@ namespace TicTacToe {
 
 		bool isEmptySquare(Move move) const;
 		bool isValid(Move move) const;
-		MoveList addMove(Move move) const;
+		MoveList addMove(Move move);
+		void undo();
 		Move getNthMove(size_t n) const;
-		
+		bool isBoardFull() const;
+
 		const std::vector<Move>& getMovesView() const { return moves; }
 		std::optional<Move> getValidInput(const std::string& input) const;
 
@@ -96,7 +98,7 @@ namespace TicTacToe {
 	void shallWePlayAGame(std::weak_ptr<IUserIO> userIO);
 
 	// Got cute here and made it recursive, still being an FP wonk.
-	void takeTurn(const MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
+	void takeTurn(MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
 
 }
 

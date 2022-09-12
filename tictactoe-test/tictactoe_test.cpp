@@ -247,5 +247,53 @@ TEST(TicTacToeTests, shallWePlayAGame)
 	EXPECT_EQ("XO \nOX \n   \n", sharedUserIOMock->outputStrings[10]);
 	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[11]);
 	EXPECT_EQ("XO \nOX \n  X\n", sharedUserIOMock->outputStrings[12]);
-	EXPECT_EQ("Player 0 wins!\n", sharedUserIOMock->outputStrings[13]);
 }
+
+TEST(TicTacToeTests, takeTurn_CatsGame_noWinner)
+{
+	MoveList moveList;
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(0, 1));
+	moveList.addMove(Move(1, 0));
+	moveList.addMove(Move(1, 1));
+	moveList.addMove(Move(2, 1)); // block
+	moveList.addMove(Move(2, 0)); // block
+	moveList.addMove(Move(0, 2)); 
+	moveList.addMove(Move(1, 2));
+
+	auto sharedUserIOMock = make_shared<UserIOMock>();
+	sharedUserIOMock->inputStrings.push_back("2,2");
+	takeTurn(moveList, sharedUserIOMock);
+	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
+	EXPECT_EQ("XXO\nOOX\nXOX\n", sharedUserIOMock->outputStrings[1]);
+	EXPECT_EQ("Nobody wins.\n", sharedUserIOMock->outputStrings[2]);
+}
+
+TEST(TicTacToeTests, takeTurn_winOnLastMove)
+{
+	MoveList moveList;
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(0, 1));
+	moveList.addMove(Move(1, 1));
+	moveList.addMove(Move(1, 0));
+	moveList.addMove(Move(2, 1));
+	moveList.addMove(Move(2, 0));
+	moveList.addMove(Move(0, 2));
+	moveList.addMove(Move(1, 2));
+
+	auto sharedUserIOMock = make_shared<UserIOMock>();
+	sharedUserIOMock->inputStrings.push_back("2,2");
+	takeTurn(moveList, sharedUserIOMock);
+	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
+	EXPECT_EQ("XOO\nOXX\nXOX\n", sharedUserIOMock->outputStrings[1]);
+	EXPECT_EQ("Player 0 wins!\n", sharedUserIOMock->outputStrings[2]);
+}
+
+//TEST(MoveListTests, undo_undoes)
+//{
+//	MoveList moveList;
+//	moveList.addMove(Move(0, 0));
+//	moveList.addMove(Move(0, 1));
+//	moveList.undo();
+//	EXPECT_EQ()
+//}

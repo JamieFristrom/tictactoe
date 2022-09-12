@@ -2,17 +2,16 @@
 //
 
 // todo:
-// - handle tie game
+// - handle tie game CHECK
+// - fix diagonal detection bug
+// - refactor MoveList + BoardState into one class
 // - implement undo
 // - optimize
 
 #include <assert.h>
 
-// I've never used ranges before, and in the real world would advise against it - because not many developers know it, so it would
-// increase their congitive load when trying to read this code. And it may be a bad idea for this coding test because it might increase your
-// cognitive load, too. (Also it's a newfangled thing and it's wise to mistrust newfangled things until other people have discovered and worked
-// out the gotchas.)
-// But this made it more fun for me: I got to learn something new that I've been wanting to try for some time.
+// This is actually my first time trying ranges - thought I'd use it for more, basically just used
+// its find() shorthand
 #include <ranges>
 
 #include "tictactoe.h"
@@ -46,11 +45,10 @@ namespace TicTacToe {
 		return(ranges::find(moves, move) == moves.end());
 	}
 
-	MoveList MoveList::addMove(Move move) const {
+	MoveList MoveList::addMove(Move move) {
 		assert(isValid(move));
-		MoveList newList = *this;
-		newList.moves.push_back(move);
-		return newList;
+		moves.push_back(move);
+		return *this;
 	}
 
 	Move MoveList::getNthMove(size_t n) const {
@@ -81,6 +79,13 @@ namespace TicTacToe {
 		return boardState;
 	}
 
+	bool MoveList::isBoardFull() const
+	{
+		// makes the assumption that no invalid moves have been made
+		assert(moves.size() <= ruleSet.boardWidth * ruleSet.boardHeight);
+		return moves.size() >= ruleSet.boardWidth * ruleSet.boardHeight;
+	}
+
 	//
 	// BoardState
 	//
@@ -97,6 +102,10 @@ namespace TicTacToe {
 		return (moveForXY > 0) ? moveForXY % 2 : moveForXY;
 	}
 
+	// CPU perf wise this is currently an O(n) algorithm where n is the number of squares
+	// on the board, and it does a lot of small allocs that are probably murder as well.
+	// If I only checked rays coming out of the latest move it would have to do a much smaller
+	// number of checks, and we don't need to be doing all those small allocs either. 
 	optional<int> BoardState::getOverallWin() const
 	{
 		const auto rowWinner = getRowWin();
@@ -116,6 +125,8 @@ namespace TicTacToe {
 
 	// I thought my general-purpose getWin() function would mean less duplication in the following code
 	// but there's still so much, so kind of regretting the getWin()
+	// Now thinking a more elegant way would be to specify directions for traversing the grid, 
+	// such as (+1,+0), (-1,+1) to find winning diagonals ... (+0,+1), (+1,+0) to find winning rows, etc...
 	optional<int> BoardState::getRowWin() const
 	{
 		for (uint32_t row = 0; row < ruleSet.boardHeight; row++)
@@ -178,6 +189,8 @@ namespace TicTacToe {
 		return nullopt;
 	}
 
+	// OH. There's a bug here, it can miss some diagonal wins in the lower left when nInARow is
+	// less than height.
 	optional<int> BoardState::getSEDiagonalWin() const
 	{
 		for (uint32_t startCol = 0; startCol < ruleSet.boardWidth + ruleSet.boardHeight; startCol++)
@@ -253,7 +266,7 @@ namespace TicTacToe {
 		takeTurn(initialMoveList, userIO);
 	}
 
-	void takeTurn(const MoveList& previousMoveList, weak_ptr<IUserIO> userIO)
+	void takeTurn(MoveList& previousMoveList, weak_ptr<IUserIO> userIO)
 	{
 		auto lockedUserIO = userIO.lock();  // I'm not really a fan of the if( auto lockedUserIO = userIO.lock()) idiom just because it doesn't strike me as 'natural' but if that's popular at Psyonix I'll conform
 		if (lockedUserIO)
@@ -275,15 +288,25 @@ namespace TicTacToe {
 			{
 				MoveList newMoveList = previousMoveList.addMove(input.value());
 				lockedUserIO->print(renderMoveList(newMoveList).c_str());
+
 				const optional<int> winner = newMoveList.toBoardState().getOverallWin();
 				if (winner)
 				{
 					std::string winMessage = "Player " + to_string(winner.value()) + " wins!\n";
 					lockedUserIO->print(winMessage.c_str());
+					// recursion ends
 				}
 				else
 				{
-					takeTurn(newMoveList, userIO);
+					if (newMoveList.isBoardFull())
+					{
+						lockedUserIO->print("Nobody wins.\n");
+						// recursion ends
+					}
+					else
+					{
+						takeTurn(newMoveList, userIO);
+					}
 				}
 			}
 		}
