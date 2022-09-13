@@ -49,6 +49,7 @@ namespace TicTacToe {
 		std::optional<Move> getValidInput(const std::string& input) const;
 
 		int whoseTurn() const;
+		int getTurn() const { return turn; }
 
 		const RuleSet ruleSet;
 		std::optional<int> getOverallWin() const;

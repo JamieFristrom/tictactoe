@@ -152,6 +152,29 @@ TEST(MoveListTests, MoveList_whoseTurn_alternates)
 	// one of the downsides of FP, above - it's easy to mess up the #s at the ends of those moveLists
 }
 
+TEST(MoveListTests, undo_undoes)
+{
+	MoveList moveList;
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(0, 1));
+	moveList.undo();
+	EXPECT_EQ(-1, moveList.getXorO(Move(0, 1)));
+	EXPECT_EQ(1, moveList.getTurn());
+}
+
+TEST(MoveListTests, dont_undo_too_far)
+{
+	MoveList moveList;
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(0, 1));
+	moveList.undo();
+	moveList.undo();
+	moveList.undo();
+	EXPECT_EQ(-1, moveList.getXorO(Move(0, 1)));
+	EXPECT_EQ(-1, moveList.getXorO(Move(0, 0)));
+	EXPECT_EQ(0, moveList.getTurn());
+}
+
 TEST(TicTacToeTests, renderMoveList_empty)
 {
 	MoveList moveList;
@@ -274,11 +297,3 @@ TEST(TicTacToeTests, takeTurn_winOnLastMove)
 	EXPECT_EQ("Player 0 wins!\n", sharedUserIOMock->outputStrings[2]);
 }
 
-//TEST(MoveListTests, undo_undoes)
-//{
-//	MoveList moveList;
-//	moveList.addMove(Move(0, 0));
-//	moveList.addMove(Move(0, 1));
-//	moveList.undo();
-//	EXPECT_EQ()
-//}

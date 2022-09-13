@@ -12,6 +12,7 @@
 
 #include <assert.h>
 
+#include <algorithm>
 // This is actually my first time trying ranges - thought I'd use it for more, basically just used
 // its find() shorthand
 #include <ranges>
@@ -56,6 +57,14 @@ namespace TicTacToe {
 	void MoveList::addMove(Move move) {
 		assert(isValid(move));
 		_setCell(move, turn++);
+	}
+
+	void MoveList::undo() {
+		if (turn > 0)
+		{
+			turn--;
+			replace(turnForCell.begin(), turnForCell.end(), turn, -1);
+		}
 	}
 
 	void MoveList::_setCell(Move move, int turn)
