@@ -8,12 +8,7 @@
 
 class IUserIO;
 
-// Overthinking:
-// the capitalization of filenames doesn't match the classnames because in general I like intercaps and camel case but there's a chance we might want to build for
-// other OS's / compilers in the future in which case filename capitalization can become a gotcha
-
 namespace TicTacToe {
-	// generally passing Move by value assuming it will go on the stack on 64-bit machines; const & might be a microoptimization that doesn't in fact optimize
 	struct Move {
 		uint32_t x;
 		uint32_t y;
@@ -25,9 +20,10 @@ namespace TicTacToe {
 	struct RuleSet {
 		uint32_t boardWidth = 3;
 		uint32_t boardHeight = 3;
-		// how many in a row (not a literal board row but row, col, diagonal) you need to win
+		// how many in a row (not a literal board row but row or col or diagonal) you need to win
 		int32_t nInARow = 3;  // I like to default to leaving things signed unless not doing so makes life easier (fewer assert checks for example)
 
+		// generally pass Move by value assuming it will go on the stack on 64-bit machines; passing by const & might be a microoptimization that doesn't in fact optimize (but I didn't confirm)
 		bool isInBounds(Move move) const;
 	};
 
@@ -41,9 +37,10 @@ namespace TicTacToe {
 
 		bool isEmptySquare(Move move) const;
 		bool isValid(Move move) const;
+		
 		void addMove(Move move);
 		void undo();
-		Move getNthMove(size_t n) const;
+
 		bool isBoardFull() const;
 
 		std::optional<Move> getValidInput(const std::string& input) const;
@@ -67,6 +64,11 @@ namespace TicTacToe {
 		// This is duplication of data-two sources of the same truth-since we could find the current turn by taking max()
 		// of the board and add 1... but y'all asked me to optimize so doing it this way
 		int turn = 0;
+
+		// This insight didn't come to me right away but implementing it almost as if it was a newspaper article on
+		// a Go game, where each square contains the turn its piece was played (or -1 for empty), and X and O
+		// can be determined by the modulo 2 of the turn - keeps the history of the moves compact for undo/replay
+		// purposes, doesn't lose data (until you undo), and is amenable to searching for wins in O(n) time.
 		std::vector<int> turnForCell;
 
 	};
@@ -80,17 +82,23 @@ namespace TicTacToe {
 	// check if it's a valid move
 	std::optional<Move> parseCommand(const std::string& command);
 
-	// More overthinking:
-	// While I know that this particular app creates the IO on the stack and shared_ptr is safe
+	// Overthinking:
+	// While I know that this particular app creates the IO on the stack and a shared_ptr would be safe
 	// (even a raw pointer would be safe) if this was the real world we might have to deal with
 	// some weird suspend/resume or teardown situations with multiple threads and would want
 	// to handle it gracefully, thus the weak_ptr.
 	void shallWePlayAGame(std::weak_ptr<IUserIO> userIO);
 	// Though I think now it would be better to use a unique_ptr that we return when we're done,
-	// like borrowing in Rust.
+	// like borrowing in Rust - though then there'd be the ergonomic hassle of takeTurn (below) having two things to return.
 
 	void takeTurns(MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
-	bool takeTurn(MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
+
+	enum class PlayStatus
+	{
+		InProgress,
+		GameOver
+	};
+	PlayStatus takeTurn(MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
 
 }
 

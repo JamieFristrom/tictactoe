@@ -105,7 +105,7 @@ TEST(MoveListTests, MoveList_firstAddMove_moveThere)
 {
 	MoveList origingalList;
 	origingalList.addMove(Move(0, 0));
-	EXPECT_TRUE(origingalList.getNthMove(0) == Move(0, 0));
+	EXPECT_EQ(0, origingalList.getXorO(Move(0, 0)));
 }
 
 // Some would argue these should be separate tests and that we should put tests around isOutOfBounds and isEmptySquare
@@ -162,7 +162,7 @@ TEST(MoveListTests, undo_undoes)
 	EXPECT_EQ(1, moveList.getTurn());
 }
 
-TEST(MoveListTests, dont_undo_too_far)
+TEST(MoveListTests, undo_dont_undo_too_far)
 {
 	MoveList moveList;
 	moveList.addMove(Move(0, 0));
@@ -230,31 +230,6 @@ public:
 	vector<string> inputStrings;
 };
 
-TEST(TicTacToeTests, shallWePlayAGame)
-{
-	auto sharedUserIOMock = make_shared<UserIOMock>();
-	sharedUserIOMock->inputStrings.push_back("0,3");
-	sharedUserIOMock->inputStrings.push_back("0,0");
-	sharedUserIOMock->inputStrings.push_back("1,0");
-	sharedUserIOMock->inputStrings.push_back("1,1");
-	sharedUserIOMock->inputStrings.push_back("0,1");
-	sharedUserIOMock->inputStrings.push_back("2,2");
-	shallWePlayAGame(sharedUserIOMock);
-	EXPECT_EQ("Shall we play a game?\n", sharedUserIOMock->outputStrings[0]);
-	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[1]);
-	EXPECT_EQ("I don't understand that move.\n", sharedUserIOMock->outputStrings[2]);
-	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[3]);
-	EXPECT_EQ("X  \n   \n   \n", sharedUserIOMock->outputStrings[4]);
-	EXPECT_EQ("Player 1 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[5]);
-	EXPECT_EQ("XO \n   \n   \n", sharedUserIOMock->outputStrings[6]);
-	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[7]);
-	EXPECT_EQ("XO \n X \n   \n", sharedUserIOMock->outputStrings[8]);
-	EXPECT_EQ("Player 1 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[9]);
-	EXPECT_EQ("XO \nOX \n   \n", sharedUserIOMock->outputStrings[10]);
-	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[11]);
-	EXPECT_EQ("XO \nOX \n  X\n", sharedUserIOMock->outputStrings[12]);
-}
-
 TEST(TicTacToeTests, takeTurn_CatsGame_noWinner)
 {
 	MoveList moveList;
@@ -269,9 +244,9 @@ TEST(TicTacToeTests, takeTurn_CatsGame_noWinner)
 
 	auto sharedUserIOMock = make_shared<UserIOMock>();
 	sharedUserIOMock->inputStrings.push_back("2,2");
-	bool result = takeTurn(moveList, sharedUserIOMock);
-	EXPECT_EQ(false, result);
-	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
+	PlayStatus result = takeTurn(moveList, sharedUserIOMock);
+	EXPECT_EQ(PlayStatus::GameOver, result);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
 	EXPECT_EQ("XXO\nOOX\nXOX\n", sharedUserIOMock->outputStrings[1]);
 	EXPECT_EQ("Nobody wins.\n", sharedUserIOMock->outputStrings[2]);
 }
@@ -290,10 +265,89 @@ TEST(TicTacToeTests, takeTurn_winOnLastMove)
 
 	auto sharedUserIOMock = make_shared<UserIOMock>();
 	sharedUserIOMock->inputStrings.push_back("2,2");
-	bool result = takeTurn(moveList, sharedUserIOMock);
-	EXPECT_EQ(false, result);
-	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
+	PlayStatus result = takeTurn(moveList, sharedUserIOMock);
+	EXPECT_EQ(PlayStatus::GameOver, result);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
 	EXPECT_EQ("XOO\nOXX\nXOX\n", sharedUserIOMock->outputStrings[1]);
 	EXPECT_EQ("Player 0 wins!\n", sharedUserIOMock->outputStrings[2]);
 }
 
+TEST(TicTacToeTests, takeTurn_undo_works)
+{
+	MoveList moveList;
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(0, 1));
+	moveList.addMove(Move(1, 1));
+
+	auto sharedUserIOMock = make_shared<UserIOMock>();
+	sharedUserIOMock->inputStrings.push_back("u");
+	PlayStatus result = takeTurn(moveList, sharedUserIOMock);
+	EXPECT_EQ(PlayStatus::InProgress, result);
+	EXPECT_EQ("Player 1 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
+	EXPECT_EQ(2, moveList.getTurn());
+	EXPECT_EQ(-1, moveList.getXorO(Move(1, 1)));
+}
+
+TEST(TicTacToeTests, shallWePlayAGame_fullGameIntegrationTest)
+{
+	auto sharedUserIOMock = make_shared<UserIOMock>();
+	sharedUserIOMock->inputStrings.push_back("0,3");
+	sharedUserIOMock->inputStrings.push_back("0,0");
+	sharedUserIOMock->inputStrings.push_back("1,0");
+	sharedUserIOMock->inputStrings.push_back("1,1");
+	sharedUserIOMock->inputStrings.push_back("0,1");
+	sharedUserIOMock->inputStrings.push_back("2,2");
+	shallWePlayAGame(sharedUserIOMock);
+	EXPECT_EQ("Shall we play a game?\n", sharedUserIOMock->outputStrings[0]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[1]);
+	EXPECT_EQ("I don't understand that move.\n", sharedUserIOMock->outputStrings[2]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[3]);
+	EXPECT_EQ("X  \n   \n   \n", sharedUserIOMock->outputStrings[4]);
+	EXPECT_EQ("Player 1 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[5]);
+	EXPECT_EQ("XO \n   \n   \n", sharedUserIOMock->outputStrings[6]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[7]);
+	EXPECT_EQ("XO \n X \n   \n", sharedUserIOMock->outputStrings[8]);
+	EXPECT_EQ("Player 1 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[9]);
+	EXPECT_EQ("XO \nOX \n   \n", sharedUserIOMock->outputStrings[10]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[11]);
+	EXPECT_EQ("XO \nOX \n  X\n", sharedUserIOMock->outputStrings[12]);
+	EXPECT_EQ("Player 0 wins!\n", sharedUserIOMock->outputStrings[13]);
+}
+
+TEST(TicTacToeTests, shallWePlayAGame_fullGameIntegrationTestWithUndoes)
+{
+	auto sharedUserIOMock = make_shared<UserIOMock>();
+	sharedUserIOMock->inputStrings.push_back("0,0");
+	sharedUserIOMock->inputStrings.push_back("u");
+	sharedUserIOMock->inputStrings.push_back("undo");
+	sharedUserIOMock->inputStrings.push_back("0,0");
+	sharedUserIOMock->inputStrings.push_back("1,0");
+	sharedUserIOMock->inputStrings.push_back("1,1");
+	sharedUserIOMock->inputStrings.push_back("u");
+	sharedUserIOMock->inputStrings.push_back("1,1");
+	sharedUserIOMock->inputStrings.push_back("0,1");
+	sharedUserIOMock->inputStrings.push_back("2,2");
+	shallWePlayAGame(sharedUserIOMock);
+	EXPECT_EQ("Shall we play a game?\n", sharedUserIOMock->outputStrings[0]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[1]);
+	EXPECT_EQ("X  \n   \n   \n", sharedUserIOMock->outputStrings[2]);
+	EXPECT_EQ("Player 1 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[3]);
+	EXPECT_EQ("   \n   \n   \n", sharedUserIOMock->outputStrings[4]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[5]);
+	EXPECT_EQ("   \n   \n   \n", sharedUserIOMock->outputStrings[6]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[7]);
+	EXPECT_EQ("X  \n   \n   \n", sharedUserIOMock->outputStrings[8]);
+	EXPECT_EQ("Player 1 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[9]);
+	EXPECT_EQ("XO \n   \n   \n", sharedUserIOMock->outputStrings[10]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[11]);
+	EXPECT_EQ("XO \n X \n   \n", sharedUserIOMock->outputStrings[12]);
+	EXPECT_EQ("Player 1 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[13]);
+	EXPECT_EQ("XO \n   \n   \n", sharedUserIOMock->outputStrings[14]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[15]);
+	EXPECT_EQ("XO \n X \n   \n", sharedUserIOMock->outputStrings[16]);
+	EXPECT_EQ("Player 1 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[17]);
+	EXPECT_EQ("XO \nOX \n   \n", sharedUserIOMock->outputStrings[18]);
+	EXPECT_EQ("Player 0 enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[19]);
+	EXPECT_EQ("XO \nOX \n  X\n", sharedUserIOMock->outputStrings[20]);
+	EXPECT_EQ("Player 0 wins!\n", sharedUserIOMock->outputStrings[21]);
+}

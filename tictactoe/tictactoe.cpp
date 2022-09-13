@@ -1,19 +1,24 @@
-// tictactoe.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
-
-// todo:
-// - handle tie game CHECK
-// - fix diagonal detection bug CHECK
-// - refactor MoveList + BoardState into one class CHECK
-// - remove BoardState (CHECK), rename MoveList->BoardState
-// - implement undo
-// - back out of FP: take recursion out of takeTurn, stop copying MoveList in tests
-// - optimize
+// Hello Psyonix!
+//
+// I know you told me not to overthink this but couldn't help myself. I wanted to show off my automated testing skills,
+// give googletest a whirl (I'm much more familiar with Microsoft's framework but it's not as Switch/PS4 friendly),
+// and experiment with a mostly pure FP approach - which I later abandoned.
+// It's actually been really fun to work on: it's been months since I coded for pure pleasure with short build times,
+// and it's been a reminder why I enjoy test-first development so much - refactoring without fear.
+// 
+// This supports the full m x n x k case but you have to tweak the code to do it: see shallWePlayAGame, line 242.
+// 
+// I think what I ended up with here has most of the good traits of an FP program (care with sources of truth,
+// not losing history of data) without the downsides (perf, space, risk of blowing out the stack.)
+// If you want to see my process or the early FP implementation I threw it up on my github - https://github.com/JamieFristrom/tictactoe
+// Things I'm particularly proud of here include the test framework (check Test->Test Explorer) and the
+// internal representation of the game state (see comment by turnForCell in tictactoe.h.)
 
 #include <assert.h>
 
 #include <algorithm>
-// This is actually my first time trying ranges - thought I'd use it for more, basically just used
+// This is actually my first time trying ranges - thought I'd use it for more, ended up only using
 // its find() shorthand
 #include <ranges>
 
@@ -26,6 +31,9 @@ using namespace std;
 
 
 namespace TicTacToe {
+
+	const Move UndoMove(0xffffffff, 0xffffffff);
+
 	//
 	// RuleSet
 	//
@@ -63,6 +71,9 @@ namespace TicTacToe {
 		if (turn > 0)
 		{
 			turn--;
+
+			// O(n), it could be O(k) if I store the last move instead of the last turn #
+			// this feels less likely to have bugs later though
 			replace(turnForCell.begin(), turnForCell.end(), turn, -1);
 		}
 	}
@@ -78,15 +89,6 @@ namespace TicTacToe {
 		return turnForCell[move.y * ruleSet.boardWidth + move.x];
 	}
 
-	Move MoveList::getNthMove(size_t n) const {
-		assert(n < turn);// moves.size());
-		auto iterator = ranges::find(turnForCell, n);
-		size_t index = iterator - turnForCell.begin();
-		uint32_t x = (uint32_t)(index % ruleSet.boardWidth);
-		uint32_t y = (uint32_t)(index / ruleSet.boardWidth);
-		return Move(x, y);
-	}
-
 	int MoveList::whoseTurn() const {
 		return turn % 2;        // wishlist: n-player game
 	}
@@ -94,7 +96,8 @@ namespace TicTacToe {
 	optional<Move> MoveList::getValidInput(const string& input) const
 	{
 		const optional<Move> interimResult = parseCommand(input);
-		return interimResult && isValid(interimResult.value()) && ruleSet.isInBounds(interimResult.value())
+		return interimResult 
+				&& ((interimResult.value()==UndoMove) || (isValid(interimResult.value()) && ruleSet.isInBounds(interimResult.value())))
 			? interimResult
 			: nullopt;
 	}
@@ -205,7 +208,7 @@ namespace TicTacToe {
 		return nullopt;
 	}
 
-	// -1 for nothing, 0 for X, 1 for O 
+	// -1 for nothing, 0 for X (because player 0), 1 for O 
 	int MoveList::getXorO(Move move) const
 	{
 		const int turnForXY = _getCell(move);
@@ -221,6 +224,10 @@ namespace TicTacToe {
 
 	// general functions in the Tic-Tac-Toe namespace
 	optional<Move> parseCommand(const string& input) {
+		if (input.c_str()[0] == 'u')
+		{
+			return optional(UndoMove);
+		}
 		uint32_t input1 = numeric_limits<uint32_t>::max();
 		uint32_t input2 = numeric_limits<uint32_t>::max();
 		int count = sscanf_s(input.c_str(), "%u,%u", &input1, &input2);
@@ -238,25 +245,31 @@ namespace TicTacToe {
 
 	void takeTurns(MoveList& moveList, weak_ptr<IUserIO> userIO)
 	{
-		for (bool stillPlaying = true; stillPlaying;)
+		for (PlayStatus playStatus = PlayStatus::InProgress; playStatus != PlayStatus::GameOver;)
 		{
-			stillPlaying = takeTurn(moveList, userIO);
+			playStatus = takeTurn(moveList, userIO);
 		}
 	}
 
-	bool takeTurn(MoveList& moveList, weak_ptr<IUserIO> userIO)
+	PlayStatus takeTurn(MoveList& moveList, weak_ptr<IUserIO> userIO)
 	{
 		auto lockedUserIO = userIO.lock();  // I'm not really a fan of the if( auto lockedUserIO = userIO.lock()) idiom just because it doesn't strike me as 'natural' but if that's popular at Psyonix I'll conform
 		if (lockedUserIO)
 		{
-			std::string outputPrompt = "Player " + to_string(moveList.whoseTurn()) + " enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n";
+			std::string outputPrompt = "Player " + to_string(moveList.whoseTurn()) + " enter your move or 'undo'. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n";
 			lockedUserIO->print(outputPrompt.c_str());
 			string command = lockedUserIO->scan();
 			auto input = moveList.getValidInput(command);
 			if (!input)
 			{
 				lockedUserIO->print("I don't understand that move.\n");
-				return true;
+				return PlayStatus::InProgress;
+			}
+			else if (input == UndoMove)
+			{
+				moveList.undo();
+				lockedUserIO->print(renderMoveList(moveList).c_str());
+				return PlayStatus::InProgress;
 			}
 			else
 			{
@@ -268,23 +281,23 @@ namespace TicTacToe {
 				{
 					std::string winMessage = "Player " + to_string(winner.value()) + " wins!\n";
 					lockedUserIO->print(winMessage.c_str());
-					return false;
+					return PlayStatus::GameOver;
 				}
 				else
 				{
 					if (moveList.isBoardFull())
 					{
 						lockedUserIO->print("Nobody wins.\n");
-						return false;
+						return PlayStatus::GameOver;
 					}
 					else
 					{
-						return true;
+						return PlayStatus::InProgress;
 					}
 				}
 			}
 		}
-		return false;
+		return PlayStatus::GameOver;
 	}
 
 	string renderMoveList(const MoveList& moveList)
