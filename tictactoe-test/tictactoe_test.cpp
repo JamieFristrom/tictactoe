@@ -77,20 +77,84 @@ TEST(BoardTests, diagonalSEWin_5x5board_lowerleft_player0)
 	EXPECT_EQ(0, board.getOverallWin());
 }
 
-TEST(MoveListTests, toBoardState_4moves_xsAndOs)
+TEST(MoveListTests, 4moves_xsAndOs)
 {
 	MoveList moveList0;
 	MoveList moveList1 = moveList0.addMove(Move(0, 0));
 	MoveList moveList2 = moveList1.addMove(Move(2, 2));
 	MoveList moveList3 = moveList2.addMove(Move(1, 1));
 	MoveList moveList4 = moveList3.addMove(Move(1, 0));
-	BoardState board = moveList4.toBoardState();
-	EXPECT_EQ(0, board.getXorO(0, 0));
-	EXPECT_EQ(1, board.getXorO(2, 2));
-	EXPECT_EQ(0, board.getXorO(1, 1));
-	EXPECT_EQ(1, board.getXorO(1, 0));
-	EXPECT_EQ(-1, board.getXorO(2, 0));
+	EXPECT_EQ(0, moveList4.getXorO(Move(0, 0)));
+	EXPECT_EQ(1, moveList4.getXorO(Move(2, 2)));
+	EXPECT_EQ(0, moveList4.getXorO(Move(1, 1)));
+	EXPECT_EQ(1, moveList4.getXorO(Move(1, 0)));
+	EXPECT_EQ(-1, moveList4.getXorO(Move(2, 0)));
 }
+
+TEST(MoveListTests, emptyBoard_getXorO_neither)
+{
+	MoveList board(RuleSet(3, 3, 3));
+	EXPECT_EQ(-1, board.getXorO(Move(0, 0)));
+	EXPECT_EQ(-1, board.getXorO(Move(2, 2)));
+}
+
+TEST(MoveListTests, horizontalWin_player0)
+{
+	MoveList moveList0;
+	MoveList moveList1 = moveList0.addMove(Move(0, 1));
+	MoveList moveList2 = moveList1.addMove(Move(0, 0));
+	MoveList moveList3 = moveList2.addMove(Move(1, 1));
+	MoveList moveList4 = moveList3.addMove(Move(1, 0));
+	MoveList moveList5 = moveList4.addMove(Move(2, 1));
+	EXPECT_EQ(0, moveList5.getOverallWin());
+}
+
+TEST(MoveListTests, verticalWin_player0)
+{
+	MoveList moveList0;
+	MoveList moveList1 = moveList0.addMove(Move(2, 0));
+	MoveList moveList2 = moveList1.addMove(Move(0, 0));
+	MoveList moveList3 = moveList2.addMove(Move(2, 1));
+	MoveList moveList4 = moveList3.addMove(Move(1, 0));
+	MoveList moveList5 = moveList4.addMove(Move(2, 2));
+	EXPECT_EQ(0, moveList5.getOverallWin());
+}
+
+TEST(MoveListTests, diagonalSEWin_5x5board_player1)
+{
+	MoveList moveList0(RuleSet(5, 5, 3));
+	MoveList moveList1 = moveList0.addMove(Move(2, 0));
+	MoveList moveList2 = moveList1.addMove(Move(2, 1));
+	MoveList moveList3 = moveList2.addMove(Move(3, 0));
+	MoveList moveList4 = moveList3.addMove(Move(3, 2));
+	MoveList moveList5 = moveList4.addMove(Move(0, 0));
+	MoveList moveList6 = moveList5.addMove(Move(4, 3));
+	EXPECT_EQ(1, moveList6.getOverallWin());
+}
+
+TEST(MoveListTests, diagonalSWWin_5x5board_player1)
+{
+	MoveList moveList0(RuleSet(5, 5, 3));
+	MoveList moveList1 = moveList0.addMove(Move(2, 0));
+	MoveList moveList2 = moveList1.addMove(Move(2, 1));
+	MoveList moveList3 = moveList2.addMove(Move(3, 0));
+	MoveList moveList4 = moveList3.addMove(Move(1, 2));
+	MoveList moveList5 = moveList4.addMove(Move(0, 0));
+	MoveList moveList6 = moveList5.addMove(Move(0, 3));
+	EXPECT_EQ(1, moveList6.getOverallWin());
+}
+
+TEST(MoveListTests, diagonalSEWin_5x5board_lowerleft_player0)
+{
+	MoveList moveList(RuleSet(5, 5, 3));
+	moveList.addMove(Move(0, 1));
+	moveList.addMove(Move(4, 4));
+	moveList.addMove(Move(1, 2));
+	moveList.addMove(Move(4, 2));
+	moveList.addMove(Move(2, 3));
+	EXPECT_EQ(0, moveList.getOverallWin());
+}
+
 TEST(MoveListTests, MoveList_LegitMoveToEmptyBoard_isValid) 
 {
 	MoveList moveList;

@@ -59,6 +59,9 @@ namespace TicTacToe {
 		MoveList();
 		MoveList(const RuleSet& _ruleSet);
 
+		// -1 for nothing, 0 for X, 1 for O 
+		int getXorO(Move move) const;
+
 		bool isEmptySquare(Move move) const;
 		bool isValid(Move move) const;
 		MoveList addMove(Move move);
@@ -73,9 +76,17 @@ namespace TicTacToe {
 		BoardState toBoardState() const;
 
 		const RuleSet ruleSet;
+		std::optional<int> getOverallWin() const;
+
 	private:
+		std::optional<int> getRowWin() const;
+		std::optional<int> getColumnWin() const;
+		std::optional<int> getSEDiagonalWin() const;
+		std::optional<int> getSWDiagonalWin() const;
+		std::optional<int> searchForWinner(int startX, int startY, int startingDX, int startingDY, int sweepDX, int sweepDY, int count) const;
+
 		void _setCell(Move move, int turn);
-		int _getCell(Move move);
+		int _getCell(Move move) const;
 		std::vector<Move> moves;
 		std::vector<int> turnForCell;
 
