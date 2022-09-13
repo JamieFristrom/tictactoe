@@ -74,8 +74,8 @@ namespace TicTacToe {
 		assert(n < turn);// moves.size());
 		auto iterator = ranges::find(turnForCell, n);
 		size_t index = iterator - turnForCell.begin();
-		int x = index % ruleSet.boardWidth;
-		int y = index / ruleSet.boardWidth;
+		uint32_t x = (uint32_t)(index % ruleSet.boardWidth);
+		uint32_t y = (uint32_t)(index / ruleSet.boardWidth);
 		return Move(x, y);
 	}
 
@@ -131,8 +131,6 @@ namespace TicTacToe {
 		return searchForWinner(0, 0, +1, 0, -1, +1, ruleSet.boardHeight+ruleSet.boardWidth);
 	}
 
-	// OH. There's a bug here, it can miss some diagonal wins in the lower left when nInARow is
-	// less than height.
 	optional<int> MoveList::getSEDiagonalWin() const
 	{
 		// go from right to left searching right-down diagonals
@@ -211,131 +209,6 @@ namespace TicTacToe {
 		// makes the assumption that no invalid moves have been made
 		assert(turn <= (int)(ruleSet.boardWidth * ruleSet.boardHeight));
 		return turn >= (int)(ruleSet.boardWidth * ruleSet.boardHeight);
-	}
-
-	//
-	// BoardState
-	//
-
-	// Initialize two-d array : -1 means nobody has taken a turn there yet.
-	BoardState::BoardState(const RuleSet& _ruleSet) :
-		ruleSet(_ruleSet),
-		moveForCell(_ruleSet.boardWidth * _ruleSet.boardHeight, -1) {}
-
-	// -1 for nothing, 0 for X, 1 for O 
-	int BoardState::getXorO(uint32_t x, uint32_t y) const
-	{
-		const int moveForXY = moveForCell[y * ruleSet.boardWidth + x];
-		return (moveForXY > 0) ? moveForXY % 2 : moveForXY;
-	}
-
-
-	// CPU perf wise this is currently an O(n) algorithm where n is the number of squares
-	// on the board.
-	// If I only checked rays coming out of the latest move it would have to do a much smaller
-	// number of checks.
-	// This theoretically is safer since it doesn't rely on that assumption...
-	optional<int> BoardState::getOverallWin() const
-	{
-		const auto rowWinner = getRowWin();
-		if (rowWinner)
-			return rowWinner;
-
-		const auto columnWinner = getColumnWin();
-		if (columnWinner)
-			return columnWinner;
-
-		const auto swDiagWinner = getSWDiagonalWin();
-		if (swDiagWinner)
-			return swDiagWinner;
-
-		return getSEDiagonalWin();
-	}
-
-	optional<int> BoardState::getRowWin() const
-	{
-		// go from top to bottom searching rows
-		return searchForWinner(0, 0, 0, +1, +1, 0, ruleSet.boardHeight);
-	}
-
-	optional<int> BoardState::getColumnWin() const
-	{
-		// go from left to right searching columns
-		return searchForWinner(0, 0, +1, 0, 0, +1, ruleSet.boardWidth);
-	}
-
-	optional<int> BoardState::getSWDiagonalWin() const
-	{
-		// go from left to right searching left-down diagonals
-		return searchForWinner(0, 0, +1, 0, -1, +1, ruleSet.boardHeight+ruleSet.boardWidth);
-	}
-
-	// OH. There's a bug here, it can miss some diagonal wins in the lower left when nInARow is
-	// less than height.
-	optional<int> BoardState::getSEDiagonalWin() const
-	{
-		// go from right to left searching right-down diagonals
-		return searchForWinner(ruleSet.boardWidth-1, 0, -1, 0, +1, +1, ruleSet.boardHeight + ruleSet.boardWidth);
-	}
-
-	// startX, startY is where we begin our search
-	// startingDX/DY is how the starting point for the search for rows moves
-	// sweepDX/DY is how it then sweeps
-	// for example 0,0 - 0,1 and 1,0 will go from left to right, sweeping downward, checking for adjacent Xs/Os in that column
-	optional<int> BoardState::searchForWinner(int startX, int startY, int startingDX, int startingDY, int sweepDX, int sweepDY, int count) const
-	{
-		// mostly these asserts are for documentation purposes
-		assert(abs(startingDX) <= 1);
-		assert(abs(startingDY) <= 1);
-		assert(abs(sweepDX) <= 1);
-		assert(abs(sweepDY) <= 1);
-		assert(startY >= 0);
-		assert(startY < (int)ruleSet.boardHeight);
-		// we can start "off the board" for diagonal sweeps:
-		assert(startX > -((int)ruleSet.boardHeight));
-		assert(startX < (int)(ruleSet.boardWidth + ruleSet.boardHeight));
-
-		int lineBeginX = startX;
-		int lineBeginY = startY;
-		// iterate through lines
-		for (int curLine=0; curLine<count; curLine++)
-		{
-			// travel along line
-			int counter = 0;
-			int lastXorO = -1;
-			int lineCheckerX = lineBeginX;
-			int lineCheckerY = lineBeginY;
-
-			// if we're not travelling in y we're travelling in x so check against width, otherwise check against height:
-			for (;(sweepDY==0)?(lineCheckerX < (int)ruleSet.boardWidth):(lineCheckerY < (int)ruleSet.boardHeight);)
-			{
-				int xOrO = (lineCheckerX >= 0 && lineCheckerX < (int)ruleSet.boardWidth) ?
-					moveForCell[lineCheckerY * ruleSet.boardWidth + lineCheckerX] % 2 : // conveniently, -1 % 2 is -1 so it does what we want for the 'empty' case
-					-1;
-				if (lastXorO == xOrO)
-				{
-					counter++;
-					if (counter >= ruleSet.nInARow) 
-					{
-						if (xOrO != -1)
-						{
-							assert(counter <= ruleSet.nInARow);
-							return optional<int>(xOrO);
-						}
-					}
-				}
-				else
-				{
-					counter = 1;
-					lastXorO = xOrO;
-				}
-				lineCheckerX += sweepDX;
-				lineCheckerY += sweepDY;
-			}
-			lineBeginX += startingDX;
-			lineBeginY += startingDY;
-		}
-		return nullopt;
 	}
 
 	// general functions in the Tic-Tac-Toe namespace

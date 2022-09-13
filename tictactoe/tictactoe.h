@@ -17,7 +17,7 @@ namespace TicTacToe {
 	struct Move {
 		uint32_t x;
 		uint32_t y;
-		Move(int _x, int _y) : x(_x), y(_y) {}
+		Move(uint32_t _x, uint32_t _y) : x(_x), y(_y) {}
 		
 		bool operator==(Move m2) const { return x == m2.x && y == m2.y; }
 	};
@@ -29,29 +29,6 @@ namespace TicTacToe {
 		int32_t nInARow = 3;  // I like to default to leaving things signed unless not doing so makes life easier (fewer assert checks for example)
 
 		bool isInBounds(Move move) const;
-	};
-
-	// alternate representation for gamestate that works like Go game notation to make
-	// some algorithms more convenient
-	// So even numbers are player 0, odd numbers are player 1
-	class BoardState
-	{
-	public:
-		BoardState(const RuleSet& _ruleSet);
-		int getXorO(uint32_t x, uint32_t y) const;
-
-		std::optional<int> getOverallWin() const;
-	private:
-		std::optional<int> getRowWin() const;
-		std::optional<int> getColumnWin() const;
-		std::optional<int> getSEDiagonalWin() const;
-		std::optional<int> getSWDiagonalWin() const;
-		std::optional<int> searchForWinner(int startX, int startY, int startingDX, int startingDY, int sweepDX, int sweepDY, int count) const;
-
-		const RuleSet ruleSet;
-		std::vector<int> moveForCell;
-
-		friend class MoveList;
 	};
 
 	class MoveList {
@@ -73,7 +50,6 @@ namespace TicTacToe {
 		std::optional<Move> getValidInput(const std::string& input) const;
 
 		int whoseTurn() const;
-		BoardState toBoardState() const;
 
 		const RuleSet ruleSet;
 		std::optional<int> getOverallWin() const;
