@@ -53,10 +53,9 @@ namespace TicTacToe {
 		return _getCell(move) == -1;
 	}
 
-	MoveList MoveList::addMove(Move move) {
+	void MoveList::addMove(Move move) {
 		assert(isValid(move));
 		_setCell(move, turn++);
-		return *this;
 	}
 
 	void MoveList::_setCell(Move move, int turn)
@@ -225,53 +224,58 @@ namespace TicTacToe {
 		assert(lockedUserIO);  // if it's already invalid that's wack
 		lockedUserIO->print("Shall we play a game?\n");
 		MoveList initialMoveList(RuleSet(3, 3, 3));
-		takeTurn(initialMoveList, userIO);
+		takeTurns(initialMoveList, userIO);
 	}
 
-	void takeTurn(MoveList& previousMoveList, weak_ptr<IUserIO> userIO)
+	void takeTurns(MoveList& moveList, weak_ptr<IUserIO> userIO)
+	{
+		for (bool stillPlaying = true; stillPlaying;)
+		{
+			stillPlaying = takeTurn(moveList, userIO);
+		}
+	}
+
+	bool takeTurn(MoveList& moveList, weak_ptr<IUserIO> userIO)
 	{
 		auto lockedUserIO = userIO.lock();  // I'm not really a fan of the if( auto lockedUserIO = userIO.lock()) idiom just because it doesn't strike me as 'natural' but if that's popular at Psyonix I'll conform
 		if (lockedUserIO)
 		{
-			std::string outputPrompt = "Player " + to_string(previousMoveList.whoseTurn()) + " enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n";
+			std::string outputPrompt = "Player " + to_string(moveList.whoseTurn()) + " enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n";
 			lockedUserIO->print(outputPrompt.c_str());
 			string command = lockedUserIO->scan();
-			auto input = previousMoveList.getValidInput(command);
+			auto input = moveList.getValidInput(command);
 			if (!input)
 			{
 				lockedUserIO->print("I don't understand that move.\n");
-				takeTurn(previousMoveList, userIO);
-				// Got cute here and made it recursive, still acting like an FP wonk.
-				// This could well be unsafe, not sure if tail-call optimization
-				// is going to kick in here, in which case a string
-				// of garbage inputs will eventually blow out the stack.
+				return true;
 			}
 			else
 			{
-				MoveList newMoveList = previousMoveList.addMove(input.value());
-				lockedUserIO->print(renderMoveList(newMoveList).c_str());
+				moveList.addMove(input.value());
+				lockedUserIO->print(renderMoveList(moveList).c_str());
 
-				const optional<int> winner = newMoveList.getOverallWin();
+				const optional<int> winner = moveList.getOverallWin();
 				if (winner)
 				{
 					std::string winMessage = "Player " + to_string(winner.value()) + " wins!\n";
 					lockedUserIO->print(winMessage.c_str());
-					// recursion ends
+					return false;
 				}
 				else
 				{
-					if (newMoveList.isBoardFull())
+					if (moveList.isBoardFull())
 					{
 						lockedUserIO->print("Nobody wins.\n");
-						// recursion ends
+						return false;
 					}
 					else
 					{
-						takeTurn(newMoveList, userIO);
+						return true;
 					}
 				}
 			}
 		}
+		return false;
 	}
 
 	string renderMoveList(const MoveList& moveList)

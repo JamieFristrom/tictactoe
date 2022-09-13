@@ -8,87 +8,19 @@
 using namespace TicTacToe;
 using namespace std;
 
-//TEST(BoardTests, emptyBoard_getXorO_neither)
-//{
-//	BoardState board(RuleSet(3, 3, 3));
-//	EXPECT_EQ(-1, board.getXorO(0, 0));
-//	EXPECT_EQ(-1, board.getXorO(2, 2));
-//}
-//
-//TEST(BoardTests, horizontalWin_player0)
-//{
-//	MoveList moveList0;
-//	MoveList moveList1 = moveList0.addMove(Move(0, 1));
-//	MoveList moveList2 = moveList1.addMove(Move(0, 0));
-//	MoveList moveList3 = moveList2.addMove(Move(1, 1));
-//	MoveList moveList4 = moveList3.addMove(Move(1, 0));
-//	MoveList moveList5 = moveList4.addMove(Move(2, 1));
-//	BoardState board = moveList5.toBoardState();
-//	EXPECT_EQ(0, board.getOverallWin());
-//}
-//
-//TEST(BoardTests, verticalWin_player0)
-//{
-//	MoveList moveList0;
-//	MoveList moveList1 = moveList0.addMove(Move(2, 0));
-//	MoveList moveList2 = moveList1.addMove(Move(0, 0));
-//	MoveList moveList3 = moveList2.addMove(Move(2, 1));
-//	MoveList moveList4 = moveList3.addMove(Move(1, 0));
-//	MoveList moveList5 = moveList4.addMove(Move(2, 2));
-//	BoardState board = moveList5.toBoardState();
-//	EXPECT_EQ(0, board.getOverallWin());
-//}
-//
-//TEST(BoardTests, diagonalSEWin_5x5board_player1)
-//{
-//	MoveList moveList0(RuleSet(5, 5, 3));
-//	MoveList moveList1 = moveList0.addMove(Move(2, 0));
-//	MoveList moveList2 = moveList1.addMove(Move(2, 1));
-//	MoveList moveList3 = moveList2.addMove(Move(3, 0));
-//	MoveList moveList4 = moveList3.addMove(Move(3, 2));
-//	MoveList moveList5 = moveList4.addMove(Move(0, 0));
-//	MoveList moveList6 = moveList5.addMove(Move(4, 3));
-//	BoardState board = moveList6.toBoardState();
-//	EXPECT_EQ(1, board.getOverallWin());
-//}
-//
-//TEST(BoardTests, diagonalSWWin_5x5board_player1)
-//{
-//	MoveList moveList0(RuleSet(5, 5, 3));
-//	MoveList moveList1 = moveList0.addMove(Move(2, 0));
-//	MoveList moveList2 = moveList1.addMove(Move(2, 1));
-//	MoveList moveList3 = moveList2.addMove(Move(3, 0));
-//	MoveList moveList4 = moveList3.addMove(Move(1, 2));
-//	MoveList moveList5 = moveList4.addMove(Move(0, 0));
-//	MoveList moveList6 = moveList5.addMove(Move(0, 3));
-//	BoardState board = moveList6.toBoardState();
-//	EXPECT_EQ(1, board.getOverallWin());
-//}
-//
-//TEST(BoardTests, diagonalSEWin_5x5board_lowerleft_player0)
-//{
-//	MoveList moveList(RuleSet(5, 5, 3));
-//	moveList.addMove(Move(0, 1));
-//	moveList.addMove(Move(4, 4));
-//	moveList.addMove(Move(1, 2));
-//	moveList.addMove(Move(4, 2));
-//	moveList.addMove(Move(2, 3));
-//	BoardState board = moveList.toBoardState();
-//	EXPECT_EQ(0, board.getOverallWin());
-//}
 
 TEST(MoveListTests, 4moves_xsAndOs)
 {
-	MoveList moveList0;
-	MoveList moveList1 = moveList0.addMove(Move(0, 0));
-	MoveList moveList2 = moveList1.addMove(Move(2, 2));
-	MoveList moveList3 = moveList2.addMove(Move(1, 1));
-	MoveList moveList4 = moveList3.addMove(Move(1, 0));
-	EXPECT_EQ(0, moveList4.getXorO(Move(0, 0)));
-	EXPECT_EQ(1, moveList4.getXorO(Move(2, 2)));
-	EXPECT_EQ(0, moveList4.getXorO(Move(1, 1)));
-	EXPECT_EQ(1, moveList4.getXorO(Move(1, 0)));
-	EXPECT_EQ(-1, moveList4.getXorO(Move(2, 0)));
+	MoveList moveList;
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(2, 2));
+	moveList.addMove(Move(1, 1));
+	moveList.addMove(Move(1, 0));
+	EXPECT_EQ(0, moveList.getXorO(Move(0, 0)));
+	EXPECT_EQ(1, moveList.getXorO(Move(2, 2)));
+	EXPECT_EQ(0, moveList.getXorO(Move(1, 1)));
+	EXPECT_EQ(1, moveList.getXorO(Move(1, 0)));
+	EXPECT_EQ(-1, moveList.getXorO(Move(2, 0)));
 }
 
 TEST(MoveListTests, emptyBoard_getXorO_neither)
@@ -100,48 +32,48 @@ TEST(MoveListTests, emptyBoard_getXorO_neither)
 
 TEST(MoveListTests, horizontalWin_player0)
 {
-	MoveList moveList0;
-	MoveList moveList1 = moveList0.addMove(Move(0, 1));
-	MoveList moveList2 = moveList1.addMove(Move(0, 0));
-	MoveList moveList3 = moveList2.addMove(Move(1, 1));
-	MoveList moveList4 = moveList3.addMove(Move(1, 0));
-	MoveList moveList5 = moveList4.addMove(Move(2, 1));
-	EXPECT_EQ(0, moveList5.getOverallWin());
+	MoveList moveList;
+	moveList.addMove(Move(0, 1));
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(1, 1));
+	moveList.addMove(Move(1, 0));
+	moveList.addMove(Move(2, 1));
+	EXPECT_EQ(0, moveList.getOverallWin());
 }
 
 TEST(MoveListTests, verticalWin_player0)
 {
-	MoveList moveList0;
-	MoveList moveList1 = moveList0.addMove(Move(2, 0));
-	MoveList moveList2 = moveList1.addMove(Move(0, 0));
-	MoveList moveList3 = moveList2.addMove(Move(2, 1));
-	MoveList moveList4 = moveList3.addMove(Move(1, 0));
-	MoveList moveList5 = moveList4.addMove(Move(2, 2));
-	EXPECT_EQ(0, moveList5.getOverallWin());
+	MoveList moveList;
+	moveList.addMove(Move(2, 0));
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(2, 1));
+	moveList.addMove(Move(1, 0));
+	moveList.addMove(Move(2, 2));
+	EXPECT_EQ(0, moveList.getOverallWin());
 }
 
 TEST(MoveListTests, diagonalSEWin_5x5board_player1)
 {
-	MoveList moveList0(RuleSet(5, 5, 3));
-	MoveList moveList1 = moveList0.addMove(Move(2, 0));
-	MoveList moveList2 = moveList1.addMove(Move(2, 1));
-	MoveList moveList3 = moveList2.addMove(Move(3, 0));
-	MoveList moveList4 = moveList3.addMove(Move(3, 2));
-	MoveList moveList5 = moveList4.addMove(Move(0, 0));
-	MoveList moveList6 = moveList5.addMove(Move(4, 3));
-	EXPECT_EQ(1, moveList6.getOverallWin());
+	MoveList moveList(RuleSet(5, 5, 3));
+	moveList.addMove(Move(2, 0));
+	moveList.addMove(Move(2, 1));
+	moveList.addMove(Move(3, 0));
+	moveList.addMove(Move(3, 2));
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(4, 3));
+	EXPECT_EQ(1, moveList.getOverallWin());
 }
 
 TEST(MoveListTests, diagonalSWWin_5x5board_player1)
 {
-	MoveList moveList0(RuleSet(5, 5, 3));
-	MoveList moveList1 = moveList0.addMove(Move(2, 0));
-	MoveList moveList2 = moveList1.addMove(Move(2, 1));
-	MoveList moveList3 = moveList2.addMove(Move(3, 0));
-	MoveList moveList4 = moveList3.addMove(Move(1, 2));
-	MoveList moveList5 = moveList4.addMove(Move(0, 0));
-	MoveList moveList6 = moveList5.addMove(Move(0, 3));
-	EXPECT_EQ(1, moveList6.getOverallWin());
+	MoveList moveList(RuleSet(5, 5, 3));
+	moveList.addMove(Move(2, 0));
+	moveList.addMove(Move(2, 1));
+	moveList.addMove(Move(3, 0));
+	moveList.addMove(Move(1, 2));
+	moveList.addMove(Move(0, 0));
+	moveList.addMove(Move(0, 3));
+	EXPECT_EQ(1, moveList.getOverallWin());
 }
 
 TEST(MoveListTests, diagonalSEWin_5x5board_lowerleft_player0)
@@ -165,15 +97,15 @@ TEST(MoveListTests, MoveList_LegitMoveToEmptyBoard_isValid)
 TEST(MoveListTests, MoveList_SameMoveTwice_isInvalid)
 {
 	MoveList moveList;
-	MoveList newList = moveList.addMove(Move(0, 0));
-	EXPECT_FALSE(newList.isValid(Move(0, 0)));
+	moveList.addMove(Move(0, 0));
+	EXPECT_FALSE(moveList.isValid(Move(0, 0)));
 }
 
 TEST(MoveListTests, MoveList_firstAddMove_moveThere)
 {
 	MoveList origingalList;
-	MoveList newList = origingalList.addMove(Move(0, 0));
-	EXPECT_TRUE(newList.getNthMove(0) == Move(0, 0));
+	origingalList.addMove(Move(0, 0));
+	EXPECT_TRUE(origingalList.getNthMove(0) == Move(0, 0));
 }
 
 // Some would argue these should be separate tests and that we should put tests around isOutOfBounds and isEmptySquare
@@ -209,14 +141,14 @@ TEST(MoveListTests, MoveList_whoseTurn_alternates)
 {
 	MoveList moveList;
 	EXPECT_EQ(0, moveList.whoseTurn());
-	auto moveList2 = moveList.addMove(Move(0, 0));  // auto is another thing that's mostly banned where I work - I generally favor it but another hill I won't die on
-	EXPECT_EQ(1, moveList2.whoseTurn());
-	auto moveList3 = moveList2.addMove(Move(0, 1));
-	EXPECT_EQ(0, moveList3.whoseTurn());
-	auto moveList4 = moveList3.addMove(Move(0, 2));
-	EXPECT_EQ(1, moveList4.whoseTurn());
-	auto moveList5 = moveList4.addMove(Move(1, 0));
-	EXPECT_EQ(0, moveList5.whoseTurn());            
+	moveList.addMove(Move(0, 0));  // auto is another thing that's mostly banned where I work - I generally favor it but another hill I won't die on
+	EXPECT_EQ(1, moveList.whoseTurn());
+	moveList.addMove(Move(0, 1));
+	EXPECT_EQ(0, moveList.whoseTurn());
+	moveList.addMove(Move(0, 2));
+	EXPECT_EQ(1, moveList.whoseTurn());
+	moveList.addMove(Move(1, 0));
+	EXPECT_EQ(0, moveList.whoseTurn());            
 	// one of the downsides of FP, above - it's easy to mess up the #s at the ends of those moveLists
 }
 
@@ -230,17 +162,17 @@ TEST(TicTacToeTests, renderMoveList_empty)
 TEST(TicTacToeTests, renderMoves)
 {
 	MoveList moveList;
-	auto moveList2 = moveList.addMove(Move(0, 0));  
-	string boardRepresentation = renderMoveList(moveList2);
+	moveList.addMove(Move(0, 0));  
+	string boardRepresentation = renderMoveList(moveList);
 	EXPECT_EQ("X  \n   \n   \n", boardRepresentation);
-	auto moveList3 = moveList2.addMove(Move(0, 1));
-	boardRepresentation = renderMoveList(moveList3);
+	moveList.addMove(Move(0, 1));
+	boardRepresentation = renderMoveList(moveList);
 	EXPECT_EQ("X  \nO  \n   \n", boardRepresentation);
-	auto moveList4 = moveList3.addMove(Move(0, 2));
-	boardRepresentation = renderMoveList(moveList4);
+	moveList.addMove(Move(0, 2));
+	boardRepresentation = renderMoveList(moveList);
 	EXPECT_EQ("X  \nO  \nX  \n", boardRepresentation);
-	auto moveList5 = moveList4.addMove(Move(2, 2));
-	boardRepresentation = renderMoveList(moveList5);
+	moveList.addMove(Move(2, 2));
+	boardRepresentation = renderMoveList(moveList);
 	EXPECT_EQ("X  \nO  \nX O\n", boardRepresentation);
 }
 
@@ -314,7 +246,8 @@ TEST(TicTacToeTests, takeTurn_CatsGame_noWinner)
 
 	auto sharedUserIOMock = make_shared<UserIOMock>();
 	sharedUserIOMock->inputStrings.push_back("2,2");
-	takeTurn(moveList, sharedUserIOMock);
+	bool result = takeTurn(moveList, sharedUserIOMock);
+	EXPECT_EQ(false, result);
 	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
 	EXPECT_EQ("XXO\nOOX\nXOX\n", sharedUserIOMock->outputStrings[1]);
 	EXPECT_EQ("Nobody wins.\n", sharedUserIOMock->outputStrings[2]);
@@ -334,7 +267,8 @@ TEST(TicTacToeTests, takeTurn_winOnLastMove)
 
 	auto sharedUserIOMock = make_shared<UserIOMock>();
 	sharedUserIOMock->inputStrings.push_back("2,2");
-	takeTurn(moveList, sharedUserIOMock);
+	bool result = takeTurn(moveList, sharedUserIOMock);
+	EXPECT_EQ(false, result);
 	EXPECT_EQ("Player 0 enter your move. For example: 0,0 for the top-left corner; 1,2 for the bottom-middle square.\n", sharedUserIOMock->outputStrings[0]);
 	EXPECT_EQ("XOO\nOXX\nXOX\n", sharedUserIOMock->outputStrings[1]);
 	EXPECT_EQ("Player 0 wins!\n", sharedUserIOMock->outputStrings[2]);

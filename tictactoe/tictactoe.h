@@ -41,12 +41,11 @@ namespace TicTacToe {
 
 		bool isEmptySquare(Move move) const;
 		bool isValid(Move move) const;
-		MoveList addMove(Move move);
+		void addMove(Move move);
 		void undo();
 		Move getNthMove(size_t n) const;
 		bool isBoardFull() const;
 
-		//const std::vector<Move>& getMovesView() const { return moves; }
 		std::optional<Move> getValidInput(const std::string& input) const;
 
 		int whoseTurn() const;
@@ -63,7 +62,9 @@ namespace TicTacToe {
 
 		void _setCell(Move move, int turn);
 		int _getCell(Move move) const;
-		//std::vector<Move> moves;
+
+		// This is duplication of data-two sources of the same truth-since we could find the current turn by taking max()
+		// of the board and add 1... but y'all asked me to optimize so doing it this way
 		int turn = 0;
 		std::vector<int> turnForCell;
 
@@ -84,9 +85,11 @@ namespace TicTacToe {
 	// some weird suspend/resume or teardown situations with multiple threads and would want
 	// to handle it gracefully, thus the weak_ptr.
 	void shallWePlayAGame(std::weak_ptr<IUserIO> userIO);
+	// Though I think now it would be better to use a unique_ptr that we return when we're done,
+	// like borrowing in Rust.
 
-	// Got cute here and made it recursive, still being an FP wonk.
-	void takeTurn(MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
+	void takeTurns(MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
+	bool takeTurn(MoveList& previousMoveList, std::weak_ptr<IUserIO> userIO);
 
 }
 
