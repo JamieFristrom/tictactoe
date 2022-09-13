@@ -56,7 +56,7 @@ namespace TicTacToe {
 
 	class MoveList {
 	public:
-		MoveList() {}
+		MoveList();
 		MoveList(const RuleSet& _ruleSet);
 
 		bool isEmptySquare(Move move) const;
@@ -74,8 +74,11 @@ namespace TicTacToe {
 
 		const RuleSet ruleSet;
 	private:
+		void _setCell(Move move, int turn);
+		int _getCell(Move move);
 		std::vector<Move> moves;
-		
+		std::vector<int> turnForCell;
+
 	};
 
 	// I'm a fan of document-view paradigms for games rather than what most games do where they keep cosmetic information (meshes, textures)

@@ -3,7 +3,7 @@
 
 // todo:
 // - handle tie game CHECK
-// - fix diagonal detection bug
+// - fix diagonal detection bug CHECK
 // - refactor MoveList + BoardState into one class
 // - implement undo
 // - optimize
@@ -33,22 +33,40 @@ namespace TicTacToe {
 	//
 	// MoveList
 	//
+	MoveList::MoveList() :
+		turnForCell(ruleSet.boardWidth*ruleSet.boardHeight, -1) {}
+
 	MoveList::MoveList(const RuleSet& _ruleSet) :
-		ruleSet(_ruleSet) {}
+		ruleSet(_ruleSet),
+		turnForCell(_ruleSet.boardWidth*_ruleSet.boardHeight, -1) {}
 
 	// considered having addMove, getNthMove, etc be able to return errors but this is ergonomically less of a hassle
-	bool MoveList::isValid(Move move) const {
+	bool MoveList::isValid(Move move) const 
+	{
 		return(ruleSet.isInBounds(move) && isEmptySquare(move));
 	}
 
-	bool MoveList::isEmptySquare(Move move) const {
+	bool MoveList::isEmptySquare(Move move) const 
+	{
 		return(ranges::find(moves, move) == moves.end());
 	}
 
 	MoveList MoveList::addMove(Move move) {
 		assert(isValid(move));
 		moves.push_back(move);
+		_setCell(move, (int)moves.size());
 		return *this;
+	}
+
+	void MoveList::_setCell(Move move, int turn)
+	{
+		// on which turn was an x or o placed in that cell
+		turnForCell[move.y * ruleSet.boardWidth + move.x] = turn;
+	}
+
+	int MoveList::_getCell(Move move)
+	{
+		return turnForCell[move.y * ruleSet.boardWidth + move.x];
 	}
 
 	Move MoveList::getNthMove(size_t n) const {
@@ -178,9 +196,9 @@ namespace TicTacToe {
 			int lineCheckerY = lineBeginY;
 
 			// if we're not travelling in y we're travelling in x so check against width, otherwise check against height:
-			for (;(sweepDY==0)?(lineCheckerX < ruleSet.boardWidth):(lineCheckerY < ruleSet.boardHeight);)
+			for (;(sweepDY==0)?(lineCheckerX < (int)ruleSet.boardWidth):(lineCheckerY < (int)ruleSet.boardHeight);)
 			{
-				int xOrO = (lineCheckerX >= 0 && lineCheckerX < ruleSet.boardWidth) ?
+				int xOrO = (lineCheckerX >= 0 && lineCheckerX < (int)ruleSet.boardWidth) ?
 					moveForCell[lineCheckerY * ruleSet.boardWidth + lineCheckerX] % 2 : // conveniently, -1 % 2 is -1 so it does what we want for the 'empty' case
 					-1;
 				if (lastXorO == xOrO)
@@ -209,33 +227,6 @@ namespace TicTacToe {
 		return nullopt;
 	}
 
-	//int getWin(int nInARow, const vector<int>& values)
-	//{
-	//	int lastXorO = -1;
-	//	int counter = 0;
-	//	for (auto xOrO: values)
-	//	{
-	//		if (xOrO == lastXorO)
-	//		{
-	//			counter++;
-	//		}
-	//		else
-	//		{
-	//			lastXorO = xOrO;
-	//			counter = 1;
-	//		}
-	//		if (counter >= nInARow)
-	//		{
-	//			if (lastXorO >= 0)
-	//			{
-	//				assert(counter == nInARow); // otherwise we played too long without detecting victory
-	//				return lastXorO;
-	//			}
-	//		}
-	//	}
-	//	return -1;
-	//}
-
 	// general functions in the Tic-Tac-Toe namespace
 	optional<Move> parseCommand(const string& input) {
 		uint32_t input1 = numeric_limits<uint32_t>::max();
@@ -249,7 +240,7 @@ namespace TicTacToe {
 		auto lockedUserIO = userIO.lock();
 		assert(lockedUserIO);  // if it's already invalid that's wack
 		lockedUserIO->print("Shall we play a game?\n");
-		MoveList initialMoveList(RuleSet(5, 5, 3));
+		MoveList initialMoveList(RuleSet(3, 3, 3));
 		takeTurn(initialMoveList, userIO);
 	}
 
