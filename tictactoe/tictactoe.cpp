@@ -4,8 +4,10 @@
 // todo:
 // - handle tie game CHECK
 // - fix diagonal detection bug CHECK
-// - refactor MoveList + BoardState into one class
+// - refactor MoveList + BoardState into one class CHECK
+// - remove BoardState (CHECK), rename MoveList->BoardState
 // - implement undo
+// - back out of FP: take recursion out of takeTurn, stop copying MoveList in tests
 // - optimize
 
 #include <assert.h>
@@ -48,13 +50,12 @@ namespace TicTacToe {
 
 	bool MoveList::isEmptySquare(Move move) const 
 	{
-		return(ranges::find(moves, move) == moves.end());
+		return _getCell(move) == -1;
 	}
 
 	MoveList MoveList::addMove(Move move) {
 		assert(isValid(move));
-		_setCell(move, (int)moves.size());
-		moves.push_back(move);
+		_setCell(move, turn++);
 		return *this;
 	}
 
@@ -70,12 +71,16 @@ namespace TicTacToe {
 	}
 
 	Move MoveList::getNthMove(size_t n) const {
-		assert(n < moves.size());
-		return moves[n];
+		assert(n < turn);// moves.size());
+		auto iterator = ranges::find(turnForCell, n);
+		size_t index = iterator - turnForCell.begin();
+		int x = index % ruleSet.boardWidth;
+		int y = index / ruleSet.boardWidth;
+		return Move(x, y);
 	}
 
 	int MoveList::whoseTurn() const {
-		return moves.size() % 2;        // wishlist: n-player game
+		return turn % 2;        // wishlist: n-player game
 	}
 
 	optional<Move> MoveList::getValidInput(const string& input) const
@@ -86,22 +91,11 @@ namespace TicTacToe {
 			: nullopt;
 	}
 
-	BoardState MoveList::toBoardState() const
-	{
-		BoardState boardState(ruleSet);
-		for (int turn = 0; turn < moves.size(); turn++)
-		{
-			Move move = getNthMove(turn);
-			boardState.moveForCell[move.y * ruleSet.boardWidth + move.x] = turn;
-		}
-		return boardState;
-	}
-
-		// CPU perf wise this is currently an O(n) algorithm where n is the number of squares
+	// CPU perf wise this is currently an O(n) algorithm where n is the number of squares
 	// on the board.
 	// If I only checked rays coming out of the latest move it would have to do a much smaller
 	// number of checks.
-	// This theoretically is safer since it doesn't rely on that assumption...
+	// But this theoretically is safer since it doesn't rely on that assumption...
 	optional<int> MoveList::getOverallWin() const
 	{
 		const auto rowWinner = getRowWin();
@@ -215,8 +209,8 @@ namespace TicTacToe {
 	bool MoveList::isBoardFull() const
 	{
 		// makes the assumption that no invalid moves have been made
-		assert(moves.size() <= ruleSet.boardWidth * ruleSet.boardHeight);
-		return moves.size() >= ruleSet.boardWidth * ruleSet.boardHeight;
+		assert(turn <= (int)(ruleSet.boardWidth * ruleSet.boardHeight));
+		return turn >= (int)(ruleSet.boardWidth * ruleSet.boardHeight);
 	}
 
 	//
@@ -384,7 +378,7 @@ namespace TicTacToe {
 				MoveList newMoveList = previousMoveList.addMove(input.value());
 				lockedUserIO->print(renderMoveList(newMoveList).c_str());
 
-				const optional<int> winner = newMoveList.toBoardState().getOverallWin();
+				const optional<int> winner = newMoveList.getOverallWin();
 				if (winner)
 				{
 					std::string winMessage = "Player " + to_string(winner.value()) + " wins!\n";
@@ -411,10 +405,14 @@ namespace TicTacToe {
 	{
 		string boardRepresentation((moveList.ruleSet.boardWidth + 1) * moveList.ruleSet.boardHeight, ' ');
 		// x's & o's
-		for (int turn = 0; turn < moveList.getMovesView().size(); turn++)
+		for (uint32_t y = 0; y < moveList.ruleSet.boardHeight; y++)
 		{
-			Move move = moveList.getNthMove(turn);
-			boardRepresentation[move.y * (moveList.ruleSet.boardWidth + 1) + move.x] = (turn % 2) ? 'O' : 'X';
+			for (uint32_t x = 0; x < moveList.ruleSet.boardWidth; x++)
+			{
+				const int xOrO = moveList.getXorO(Move(x, y));
+				boardRepresentation[y * (moveList.ruleSet.boardWidth + 1) + x] =
+					(xOrO == -1) ? ' ' : (xOrO == 0) ? 'X' : 'O';
+			}
 		}
 		// linefeeds
 		for (uint32_t line = 1; line <= moveList.ruleSet.boardHeight; line++)

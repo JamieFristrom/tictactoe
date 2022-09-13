@@ -69,7 +69,7 @@ namespace TicTacToe {
 		Move getNthMove(size_t n) const;
 		bool isBoardFull() const;
 
-		const std::vector<Move>& getMovesView() const { return moves; }
+		//const std::vector<Move>& getMovesView() const { return moves; }
 		std::optional<Move> getValidInput(const std::string& input) const;
 
 		int whoseTurn() const;
@@ -87,7 +87,8 @@ namespace TicTacToe {
 
 		void _setCell(Move move, int turn);
 		int _getCell(Move move) const;
-		std::vector<Move> moves;
+		//std::vector<Move> moves;
+		int turn = 0;
 		std::vector<int> turnForCell;
 
 	};
