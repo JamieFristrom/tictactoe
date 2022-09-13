@@ -46,6 +46,7 @@ namespace TicTacToe {
 		std::optional<int> getColumnWin() const;
 		std::optional<int> getSEDiagonalWin() const;
 		std::optional<int> getSWDiagonalWin() const;
+		std::optional<int> searchForWinner(int startX, int startY, int startingDX, int startingDY, int sweepDX, int sweepDY, int count) const;
 
 		const RuleSet ruleSet;
 		std::vector<int> moveForCell;
@@ -76,10 +77,6 @@ namespace TicTacToe {
 		std::vector<Move> moves;
 		
 	};
-
-	// pass in a series of values extracted from a row, column, or diagonal;
-	// returns 0 if player 0 wins, 1 if player 1 wins, or -1 if nobody has n-in-a-row
-	int getWin(int nInARow, const std::vector<int>& values);
 
 	// I'm a fan of document-view paradigms for games rather than what most games do where they keep cosmetic information (meshes, textures)
 	// attached to the same classes of the sim (actors, physics) - in my game Sixty Second Shooter they were entirely separate, I could have rendered the

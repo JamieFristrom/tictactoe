@@ -123,131 +123,118 @@ namespace TicTacToe {
 		return getSEDiagonalWin();
 	}
 
-	// I thought my general-purpose getWin() function would mean less duplication in the following code
-	// but there's still so much, so kind of regretting the getWin()
-	// Now thinking a more elegant way would be to specify directions for traversing the grid, 
-	// such as (+1,+0), (-1,+1) to find winning diagonals ... (+0,+1), (+1,+0) to find winning rows, etc...
 	optional<int> BoardState::getRowWin() const
 	{
-		for (uint32_t row = 0; row < ruleSet.boardHeight; row++)
-		{
-			vector<int> series;
-			for (uint32_t col = 0; col < ruleSet.boardWidth; col++)
-			{
-				series.push_back(getXorO(col, row));
-			}
-			const int winner = getWin(ruleSet.nInARow, series);
-			if (winner >= 0) {
-				return optional<int>(winner);
-			}
-		}
-		return nullopt;
+		// go from top to bottom searching rows
+		return searchForWinner(0, 0, 0, +1, +1, 0, ruleSet.boardHeight);
 	}
 
 	optional<int> BoardState::getColumnWin() const
 	{
-		for (uint32_t col = 0; col < ruleSet.boardWidth; col++)
-		{
-			vector<int> series;
-			for (uint32_t row = 0; row < ruleSet.boardHeight; row++)
-			{
-				series.push_back(getXorO(col, row));
-			}
-			const int winner = getWin(ruleSet.nInARow, series);
-			if (winner >= 0) {
-				return optional<int>(winner);
-			}
-		}
-		return nullopt;
+		// go from left to right searching columns
+		return searchForWinner(0, 0, +1, 0, 0, +1, ruleSet.boardWidth);
 	}
 
 	optional<int> BoardState::getSWDiagonalWin() const
 	{
-		for (uint32_t startCol = 0; startCol < ruleSet.boardWidth + ruleSet.boardHeight; startCol++)
-		{
-			vector<int> series;
-			for (uint32_t startRow = 0; startRow < ruleSet.boardHeight; startRow++)
-			{
-				const uint32_t x = startCol - startRow;
-				if (x < ruleSet.boardWidth)
-				{
-					series.push_back(getXorO(x, startRow));
-				}
-				else
-				{
-					break;
-				}
-			}
-			if (series.size() >= ruleSet.nInARow)
-			{
-				const int winner = getWin(ruleSet.nInARow, series);
-				if (winner >= 0) {
-					return optional<int>(winner);
-				}
-			}
-		}
-		return nullopt;
+		// go from left to right searching left-down diagonals
+		return searchForWinner(0, 0, +1, 0, -1, +1, ruleSet.boardHeight+ruleSet.boardWidth);
 	}
 
 	// OH. There's a bug here, it can miss some diagonal wins in the lower left when nInARow is
 	// less than height.
 	optional<int> BoardState::getSEDiagonalWin() const
 	{
-		for (uint32_t startCol = 0; startCol < ruleSet.boardWidth + ruleSet.boardHeight; startCol++)
+		// go from right to left searching right-down diagonals
+		return searchForWinner(ruleSet.boardWidth-1, 0, -1, 0, +1, +1, ruleSet.boardHeight + ruleSet.boardWidth);
+	}
+
+	// startX, startY is where we begin our search
+	// startingDX/DY is how the starting point for the search for rows moves
+	// sweepDX/DY is how it then sweeps
+	// for example 0,0 - 0,1 and 1,0 will go from left to right, sweeping downward, checking for adjacent Xs/Os in that column
+	optional<int> BoardState::searchForWinner(int startX, int startY, int startingDX, int startingDY, int sweepDX, int sweepDY, int count) const
+	{
+		// mostly these asserts are for documentation purposes
+		assert(abs(startingDX) <= 1);
+		assert(abs(startingDY) <= 1);
+		assert(abs(sweepDX) <= 1);
+		assert(abs(sweepDY) <= 1);
+		assert(startY >= 0);
+		assert(startY < (int)ruleSet.boardHeight);
+		// we can start "off the board" for diagonal sweeps:
+		assert(startX > -((int)ruleSet.boardHeight));
+		assert(startX < (int)(ruleSet.boardWidth + ruleSet.boardHeight));
+
+		int lineBeginX = startX;
+		int lineBeginY = startY;
+		// iterate through lines
+		for (int curLine=0; curLine<count; curLine++)
 		{
-			vector<int> series;
-			for (uint32_t startRow = 0; startRow < ruleSet.boardHeight; startRow++)
+			// travel along line
+			int counter = 0;
+			int lastXorO = -1;
+			int lineCheckerX = lineBeginX;
+			int lineCheckerY = lineBeginY;
+
+			// if we're not travelling in y we're travelling in x so check against width, otherwise check against height:
+			for (;(sweepDY==0)?(lineCheckerX < ruleSet.boardWidth):(lineCheckerY < ruleSet.boardHeight);)
 			{
-				const uint32_t x = startCol + startRow;
-				if (x < ruleSet.boardWidth)
+				int xOrO = (lineCheckerX >= 0 && lineCheckerX < ruleSet.boardWidth) ?
+					moveForCell[lineCheckerY * ruleSet.boardWidth + lineCheckerX] % 2 : // conveniently, -1 % 2 is -1 so it does what we want for the 'empty' case
+					-1;
+				if (lastXorO == xOrO)
 				{
-					series.push_back(getXorO(x, startRow));
+					counter++;
+					if (counter >= ruleSet.nInARow) 
+					{
+						if (xOrO != -1)
+						{
+							assert(counter <= ruleSet.nInARow);
+							return optional<int>(xOrO);
+						}
+					}
 				}
 				else
 				{
-					break;
+					counter = 1;
+					lastXorO = xOrO;
 				}
+				lineCheckerX += sweepDX;
+				lineCheckerY += sweepDY;
 			}
-			if (series.size() >= ruleSet.nInARow)
-			{
-				const int winner = getWin(ruleSet.nInARow, series);
-				if (winner >= 0) {
-					return optional<int>(winner);
-				}
-			}
+			lineBeginX += startingDX;
+			lineBeginY += startingDY;
 		}
 		return nullopt;
 	}
 
-
-	// my FP enthusiasm doesn't extend so far that I want to take the trouble to
-	// write some kind of reduce/fold for this or do it recursively
-	int getWin(int nInARow, const vector<int>& values)
-	{
-		int lastXorO = -1;
-		int counter = 0;
-		for (auto xOrO: values)
-		{
-			if (xOrO == lastXorO)
-			{
-				counter++;
-			}
-			else
-			{
-				lastXorO = xOrO;
-				counter = 1;
-			}
-			if (counter >= nInARow)
-			{
-				if (lastXorO >= 0)
-				{
-					assert(counter == nInARow); // otherwise we played too long without detecting victory
-					return lastXorO;
-				}
-			}
-		}
-		return -1;
-	}
+	//int getWin(int nInARow, const vector<int>& values)
+	//{
+	//	int lastXorO = -1;
+	//	int counter = 0;
+	//	for (auto xOrO: values)
+	//	{
+	//		if (xOrO == lastXorO)
+	//		{
+	//			counter++;
+	//		}
+	//		else
+	//		{
+	//			lastXorO = xOrO;
+	//			counter = 1;
+	//		}
+	//		if (counter >= nInARow)
+	//		{
+	//			if (lastXorO >= 0)
+	//			{
+	//				assert(counter == nInARow); // otherwise we played too long without detecting victory
+	//				return lastXorO;
+	//			}
+	//		}
+	//	}
+	//	return -1;
+	//}
 
 	// general functions in the Tic-Tac-Toe namespace
 	optional<Move> parseCommand(const string& input) {
@@ -262,7 +249,7 @@ namespace TicTacToe {
 		auto lockedUserIO = userIO.lock();
 		assert(lockedUserIO);  // if it's already invalid that's wack
 		lockedUserIO->print("Shall we play a game?\n");
-		MoveList initialMoveList;
+		MoveList initialMoveList(RuleSet(5, 5, 3));
 		takeTurn(initialMoveList, userIO);
 	}
 

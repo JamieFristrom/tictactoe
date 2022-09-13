@@ -65,6 +65,18 @@ TEST(BoardTests, diagonalSWWin_5x5board_player1)
 	EXPECT_EQ(1, board.getOverallWin());
 }
 
+TEST(BoardTests, diagonalSEWin_5x5board_lowerleft_player0)
+{
+	MoveList moveList(RuleSet(5, 5, 3));
+	moveList.addMove(Move(0, 1));
+	moveList.addMove(Move(4, 4));
+	moveList.addMove(Move(1, 2));
+	moveList.addMove(Move(4, 2));
+	moveList.addMove(Move(2, 3));
+	BoardState board = moveList.toBoardState();
+	EXPECT_EQ(0, board.getOverallWin());
+}
+
 TEST(MoveListTests, toBoardState_4moves_xsAndOs)
 {
 	MoveList moveList0;
@@ -142,31 +154,6 @@ TEST(MoveListTests, MoveList_whoseTurn_alternates)
 	auto moveList5 = moveList4.addMove(Move(1, 0));
 	EXPECT_EQ(0, moveList5.whoseTurn());            
 	// one of the downsides of FP, above - it's easy to mess up the #s at the ends of those moveLists
-}
-
-TEST(TicTacToeTests, getWin_allXs_victoryPlayer0)
-{
-	EXPECT_EQ(0, getWin(3, vector<int>{0, 0, 0}));
-}
-
-TEST(TicTacToeTests, getWin_allOs_victoryPlayer1)
-{
-	EXPECT_EQ(1, getWin(3, vector<int>{1, 1, 1}));
-}
-
-TEST(TicTacToeTests, getWin_12length_4toWin_4xs_victoryPlayer0)
-{
-	EXPECT_EQ(0, getWin(4, vector<int>{-1, -1, -1, -1, 0, 0, 0, 0, -1, -1, -1, -1}));
-}
-
-TEST(TicTacToeTests, getWin_12length_4toWin_4xs_3os_victoryPlayer0)
-{
-	EXPECT_EQ(0, getWin(4, vector<int>{-1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, -1}));
-}
-
-TEST(TicTacToeTests, getWin_12length_4toWin_4os_3xs_victoryPlayer1)
-{
-	EXPECT_EQ(1, getWin(4, vector<int>{-1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, -1}));
 }
 
 TEST(TicTacToeTests, renderMoveList_empty)
