@@ -18,9 +18,6 @@
 #include <assert.h>
 
 #include <algorithm>
-// This is actually my first time trying ranges - thought I'd use it for more, ended up only using
-// its find() shorthand
-#include <ranges>
 
 #include "tictactoe.h"
 #include "userio.h"
