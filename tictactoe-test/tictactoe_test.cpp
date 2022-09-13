@@ -217,12 +217,15 @@ TEST(TicTacToeTests, parseCommand_integers_returnsValidMove)
 // and now the integration test. In real life probably a separate file, particularly for the mock
 // BTW, I'm pretty good at using fakeit but this particular class is so simple that that would be
 // overkill.
-class UserIOMock : public IUserIO {
+class UserIOMock : public IUserIO 
+{
 public:
-	void print(const char* outputString) override {
+	void print(const char* outputString) override 
+	{
 		outputStrings.push_back(outputString);
 	}
-	string scan() override {
+	string scan() override 
+	{
 		return inputStrings[turn++];
 	}
 	int turn = 0;

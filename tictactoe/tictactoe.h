@@ -9,15 +9,17 @@
 class IUserIO;
 
 namespace TicTacToe {
-	struct Move {
+	struct Move 
+	{
 		uint32_t x;
 		uint32_t y;
 		Move(uint32_t _x, uint32_t _y) : x(_x), y(_y) {}
-		
+
 		bool operator==(Move m2) const { return x == m2.x && y == m2.y; }
 	};
 
-	struct RuleSet {
+	struct RuleSet 
+	{
 		uint32_t boardWidth = 3;
 		uint32_t boardHeight = 3;
 		// how many in a row (not a literal board row but row or col or diagonal) you need to win
@@ -27,7 +29,8 @@ namespace TicTacToe {
 		bool isInBounds(Move move) const;
 	};
 
-	class MoveList {
+	class MoveList 
+	{
 	public:
 		MoveList();
 		MoveList(const RuleSet& _ruleSet);
@@ -37,7 +40,7 @@ namespace TicTacToe {
 
 		bool isEmptySquare(Move move) const;
 		bool isValid(Move move) const;
-		
+
 		void addMove(Move move);
 		void undo();
 

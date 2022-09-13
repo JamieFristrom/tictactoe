@@ -34,7 +34,8 @@ namespace TicTacToe {
 	//
 	// RuleSet
 	//
-	bool RuleSet::isInBounds(Move move) const {
+	bool RuleSet::isInBounds(Move move) const 
+	{
 		return(move.x < boardWidth&& move.y < boardHeight);
 	}
 
@@ -42,29 +43,31 @@ namespace TicTacToe {
 	// MoveList
 	//
 	MoveList::MoveList() :
-		turnForCell(ruleSet.boardWidth*ruleSet.boardHeight, -1) {}
+		turnForCell(ruleSet.boardWidth* ruleSet.boardHeight, -1) {}
 
 	MoveList::MoveList(const RuleSet& _ruleSet) :
 		ruleSet(_ruleSet),
-		turnForCell(_ruleSet.boardWidth*_ruleSet.boardHeight, -1) {}
+		turnForCell(_ruleSet.boardWidth* _ruleSet.boardHeight, -1) {}
 
 	// considered having addMove, getNthMove, etc be able to return errors but this is ergonomically less of a hassle
-	bool MoveList::isValid(Move move) const 
+	bool MoveList::isValid(Move move) const
 	{
 		return(ruleSet.isInBounds(move) && isEmptySquare(move));
 	}
 
-	bool MoveList::isEmptySquare(Move move) const 
+	bool MoveList::isEmptySquare(Move move) const
 	{
 		return _getCell(move) == -1;
 	}
 
-	void MoveList::addMove(Move move) {
+	void MoveList::addMove(Move move) 
+	{
 		assert(isValid(move));
 		_setCell(move, turn++);
 	}
 
-	void MoveList::undo() {
+	void MoveList::undo() 
+	{
 		if (turn > 0)
 		{
 			turn--;
@@ -93,8 +96,8 @@ namespace TicTacToe {
 	optional<Move> MoveList::getValidInput(const string& input) const
 	{
 		const optional<Move> interimResult = parseCommand(input);
-		return interimResult 
-				&& ((interimResult.value()==UndoMove) || (isValid(interimResult.value()) && ruleSet.isInBounds(interimResult.value())))
+		return interimResult
+			&& ((interimResult.value() == UndoMove) || (isValid(interimResult.value()) && ruleSet.isInBounds(interimResult.value())))
 			? interimResult
 			: nullopt;
 	}
@@ -136,13 +139,13 @@ namespace TicTacToe {
 	optional<int> MoveList::getSWDiagonalWin() const
 	{
 		// go from left to right searching left-down diagonals
-		return searchForWinner(0, 0, +1, 0, -1, +1, ruleSet.boardHeight+ruleSet.boardWidth);
+		return searchForWinner(0, 0, +1, 0, -1, +1, ruleSet.boardHeight + ruleSet.boardWidth);
 	}
 
 	optional<int> MoveList::getSEDiagonalWin() const
 	{
 		// go from right to left searching right-down diagonals
-		return searchForWinner(ruleSet.boardWidth-1, 0, -1, 0, +1, +1, ruleSet.boardHeight + ruleSet.boardWidth);
+		return searchForWinner(ruleSet.boardWidth - 1, 0, -1, 0, +1, +1, ruleSet.boardHeight + ruleSet.boardWidth);
 	}
 
 	// startX, startY is where we begin our search
@@ -165,7 +168,7 @@ namespace TicTacToe {
 		int lineBeginX = startX;
 		int lineBeginY = startY;
 		// iterate through lines
-		for (int curLine=0; curLine<count; curLine++)
+		for (int curLine = 0; curLine < count; curLine++)
 		{
 			// travel along line
 			int counter = 0;
@@ -174,7 +177,7 @@ namespace TicTacToe {
 			int lineCheckerY = lineBeginY;
 
 			// if we're not travelling in y we're travelling in x so check against width, otherwise check against height:
-			for (;(sweepDY==0)?(lineCheckerX < (int)ruleSet.boardWidth):(lineCheckerY < (int)ruleSet.boardHeight);)
+			for (; (sweepDY == 0) ? (lineCheckerX < (int)ruleSet.boardWidth) : (lineCheckerY < (int)ruleSet.boardHeight);)
 			{
 				int xOrO = (lineCheckerX >= 0 && lineCheckerX < (int)ruleSet.boardWidth) ?
 					turnForCell[lineCheckerY * ruleSet.boardWidth + lineCheckerX] % 2 : // conveniently, -1 % 2 is -1 so it does what we want for the 'empty' case
@@ -182,7 +185,7 @@ namespace TicTacToe {
 				if (lastXorO == xOrO)
 				{
 					counter++;
-					if (counter >= ruleSet.nInARow) 
+					if (counter >= ruleSet.nInARow)
 					{
 						if (xOrO != -1)
 						{
@@ -220,7 +223,8 @@ namespace TicTacToe {
 	}
 
 	// general functions in the Tic-Tac-Toe namespace
-	optional<Move> parseCommand(const string& input) {
+	optional<Move> parseCommand(const string& input) 
+	{
 		if (input.c_str()[0] == 'u')
 		{
 			return optional(UndoMove);
